@@ -1,57 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Image Generator</title>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 10px;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 8px;
-      border: none;
-    }
-    button {
-      background: #00cc99;
-      color: white;
-      cursor: pointer;
-    }
-    img {
-      margin-top: 20px;
-      max-width: 100%;
-      border-radius: 12px;
-    }
+    body { font-family: sans-serif; background: #111; color: #fff; text-align: center; padding: 20px; }
+    input, button { padding: 10px; margin: 10px; width: 80%; max-width: 300px; border-radius: 5px; }
+    button { background-color: #00cc88; color: #fff; border: none; }
+    img { margin-top: 20px; max-width: 90%; border-radius: 10px; }
   </style>
 </head>
 <body>
-  <h1>🧠 AI Image Generator</h1>
-  <input id="prompt" type="text" placeholder="Enter your image prompt..." />
-  <br />
-  <button onclick="generateImage()">Generate Image</button>
-  <div id="result"></div>
+  <h1>🖼️ AI Image Generator</h1>
+
+  <div id="auth-section">
+    <input id="email" type="email" placeholder="Email"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="signup()">Signup</button>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="main-section" style="display:none;">
+    <p id="welcome"></p>
+    <p>Credits left: <span id="credits">0</span></p>
+    <input id="prompt" placeholder="Enter your image prompt"><br>
+    <button onclick="generateImage()">Generate Image</button><br>
+    <img id="result" src="">
+    <br><br>
+    <button onclick="logout()">Logout</button>
+  </div>
 
   <script>
+    // Firebase config (👈 isse agle step mein replace karna hai)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function signup() {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      auth.createUserWithEmailAndPassword(email, password).then(cred => {
+        db.collection("users").doc(cred.user.uid).set({
+          email: email,
+          credits: 5,
+          isPro: false
+        });
+        alert("Signup success!");
+      }).catch(e => alert(e.message));
+    }
+
+    function login() {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      auth.signInWithEmailAndPassword(email, password).then(cred => {
+        loadUserData(cred.user.uid);
+      }).catch(e => alert(e.message));
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        document.getElementById("auth-section").style.display = "block";
+        document.getElementById("main-section").style.display = "none";
+      });
+    }
+
+    function loadUserData(uid) {
+      db.collection("users").doc(uid).get().then(doc => {
+        const data = doc.data();
+        document.getElementById("auth-section").style.display = "none";
+        document.getElementById("main-section").style.display = "block";
+        document.getElementById("welcome").innerText = "Welcome " + data.email;
+        document.getElementById("credits").innerText = data.credits;
+      });
+    }
+
     function generateImage() {
       const prompt = document.getElementById("prompt").value;
-      const result = document.getElementById("result");
-      result.innerHTML = "<p>Loading image...</p>";
-      
-      // For now just show dummy image
-      setTimeout(() => {
-        result.innerHTML = `<img src="https://via.placeholder.com/600x400.png?text=${encodeURIComponent(prompt)}" />`;
-      }, 1000);
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const uid = user.uid;
+      db.collection("users").doc(uid).get().then(doc => {
+        let data = doc.data();
+        if (data.credits <= 0 && !data.isPro) {
+          alert("No credits left. Upgrade to Pro.");
+          return;
+        }
+
+        // Dummy image (replace later with real AI image)
+        document.getElementById("result").src =
+          "https://via.placeholder.com/600x400?text=" + encodeURIComponent(prompt);
+
+        if (!data.isPro) {
+          db.collection("users").doc(uid).update({ credits: data.credits - 1 });
+          document.getElementById("credits").innerText = data.credits - 1;
+        }
+      });
     }
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    auth.onAuthStateChanged(user => {
+      if (user) loadUserData(user.uid);
+    });
   </script>
 </body>
 </html>
