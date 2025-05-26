@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Image Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      background: #00cc99;
+      color: white;
+      cursor: pointer;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 AI Image Generator</h1>
+  <input id="prompt" type="text" placeholder="Enter your image prompt..." />
+  <br />
+  <button onclick="generateImage()">Generate Image</button>
+  <div id="result"></div>
+
+  <script>
+    function generateImage() {
+      const prompt = document.getElementById("prompt").value;
+      const result = document.getElementById("result");
+      result.innerHTML = "<p>Loading image...</p>";
+      
+      // For now just show dummy image
+      setTimeout(() => {
+        result.innerHTML = `<img src="https://via.placeholder.com/600x400.png?text=${encodeURIComponent(prompt)}" />`;
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
