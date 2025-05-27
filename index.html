@@ -1,122 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AI Image Generator</title>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; background: #111; color: #fff; text-align: center; padding: 20px; }
-    input, button { padding: 10px; margin: 10px; width: 80%; max-width: 300px; border-radius: 5px; }
-    button { background-color: #00cc88; color: #fff; border: none; }
-    img { margin-top: 20px; max-width: 90%; border-radius: 10px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background-color: #0d1117; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .container { max-width: 400px; width: 100%; background: #161b22; border-radius: 12px; padding: 30px; box-shadow: 0 0 10px #0006; }
+    h2 { text-align: center; margin-bottom: 20px; }
+    input, button { width: 100%; padding: 12px; margin-top: 12px; border: none; border-radius: 8px; font-size: 16px; }
+    input { background: #0d1117; color: #fff; border: 1px solid #30363d; }
+    button { background-color: #238636; color: white; cursor: pointer; transition: 0.3s; }
+    button:hover { background-color: #2ea043; }
+    .link { margin-top: 10px; text-align: center; font-size: 14px; }
+    .link a { color: #58a6ff; text-decoration: none; }
+    .link a:hover { text-decoration: underline; }
+    @media (min-width: 768px) {
+      .container { max-width: 500px; }
+    }
   </style>
 </head>
 <body>
-  <h1>🖼️ AI Image Generator</h1>
 
-  <div id="auth-section">
-    <input id="email" type="email" placeholder="Email"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-    <button onclick="signup()">Signup</button>
+  <div class="container" id="login-box">
+    <h2>Login to AI Studio</h2>
+    <input type="email" placeholder="Email" id="email" />
+    <input type="password" placeholder="Password" id="password" />
     <button onclick="login()">Login</button>
+    <div class="link">Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></div>
   </div>
 
-  <div id="main-section" style="display:none;">
-    <p id="welcome"></p>
-    <p>Credits left: <span id="credits">0</span></p>
-    <input id="prompt" placeholder="Enter your image prompt"><br>
-    <button onclick="generateImage()">Generate Image</button><br>
-    <img id="result" src="">
-    <br><br>
-    <button onclick="logout()">Logout</button>
+  <div class="container" id="signup-box" style="display:none;">
+    <h2>Create your account</h2>
+    <input type="email" placeholder="Email" id="newEmail" />
+    <input type="password" placeholder="Password" id="newPassword" />
+    <button onclick="signup()">Sign Up</button>
+    <div class="link">Already have an account? <a href="#" onclick="showLogin()">Login</a></div>
   </div>
 
   <script>
-    // Firebase config (👈 isse agle step mein replace karna hai)
-    const firebaseConfig = {
-  apiKey: "AIzaSyA6EgieC-N6aoASzkjEaK-Bm-bbni5jNDA",
-  authDomain: "ai-image-app-150f9.firebaseapp.com",
-  projectId: "ai-image-app-150f9",
-  storageBucket: "ai-image-app-150f9.firebasestorage.app",
-  messagingSenderId: "372229172051",
-  appId: "1:372229172051:web:10f7ec6ef8789530d7cfa6",
-  measurementId: "G-R97T14SK1P"
-};
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    function signup() {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.createUserWithEmailAndPassword(email, password).then(cred => {
-        db.collection("users").doc(cred.user.uid).set({
-          email: email,
-          credits: 5,
-          isPro: false
-        });
-        alert("Signup success!");
-      }).catch(e => alert(e.message));
+    function showSignup() {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('signup-box').style.display = 'block';
+    }
+    function showLogin() {
+      document.getElementById('signup-box').style.display = 'none';
+      document.getElementById('login-box').style.display = 'block';
     }
 
     function login() {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.signInWithEmailAndPassword(email, password).then(cred => {
-        loadUserData(cred.user.uid);
-      }).catch(e => alert(e.message));
+      alert("Login function here");
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById("auth-section").style.display = "block";
-        document.getElementById("main-section").style.display = "none";
-      });
+    function signup() {
+      alert("Signup function here");
     }
-
-    function loadUserData(uid) {
-      db.collection("users").doc(uid).get().then(doc => {
-        const data = doc.data();
-        document.getElementById("auth-section").style.display = "none";
-        document.getElementById("main-section").style.display = "block";
-        document.getElementById("welcome").innerText = "Welcome " + data.email;
-        document.getElementById("credits").innerText = data.credits;
-      });
-    }
-
-    function generateImage() {
-      const prompt = document.getElementById("prompt").value;
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const uid = user.uid;
-      db.collection("users").doc(uid).get().then(doc => {
-        let data = doc.data();
-        if (data.credits <= 0 && !data.isPro) {
-          alert("No credits left. Upgrade to Pro.");
-          return;
-        }
-
-        // Dummy image (replace later with real AI image)
-        document.getElementById("result").src =
-          "https://via.placeholder.com/600x400?text=" + encodeURIComponent(prompt);
-
-        if (!data.isPro) {
-          db.collection("users").doc(uid).update({ credits: data.credits - 1 });
-          document.getElementById("credits").innerText = data.credits - 1;
-        }
-      });
-    }
-
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    auth.onAuthStateChanged(user => {
-      if (user) loadUserData(user.uid);
-    });
   </script>
+
 </body>
 </html>
